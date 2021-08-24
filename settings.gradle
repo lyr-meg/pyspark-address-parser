@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        maven {
+            url "${artifactory_contextUrl}/virtual-release-bns"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.namespace == 'zeni') {
+                if (requested.id.name == 'plato-jvm-base' || requested.id.name == 'plato-base' || requested.id.name == 'plato-jvm-integtest') {
+                    useModule("zeni:plato-jvm-gradle-plugin:${requested.version}")
+                }
+            }
+        }
+    }
+}
+
+rootProject.name = 'residence_add'

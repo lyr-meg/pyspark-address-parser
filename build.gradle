@@ -1,0 +1,115 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'java'
+    id 'eclipse'
+    id 'scala'
+
+    // These must appear after other plugins to ensure configuration is applied correctly
+    id 'zeni.plato-jvm-base' version '4.0.2'
+
+    // Helper for checking if newer versions of dependencies exist
+    id 'com.github.ben-manes.versions' version '0.22.0'
+}
+
+sourceSets {
+    main {
+        scala {
+            srcDirs = ['src/main']
+        }
+    }
+}
+
+ext {
+    jupiterVersion = '5.3.2'
+    sparkVersion = '2.2.0'
+}
+
+group = 'amlthreat'
+description = 'symcor_parse'
+version = '1.0'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.description,
+                'Implementation-Version': project.version
+    }
+}
+
+shadowJar {
+    exclude 'META-INF/*'
+    exclude '*.html'
+    baseName = project.description + '-shadow'
+    zip64 = true
+    mergeServiceFiles()
+
+    configurations = [project.configurations.compile]
+
+}
+
+dependencies {
+    // *** Add Implementation/API dependencies for Library here
+    compile 'org.scala-lang:scala-library:2.11.12'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+
+    compile(group: 'org.apache.hadoop', name: 'hadoop-common', version: '2.7.1')
+    compile "org.apache.spark:spark-core_2.11:$sparkVersion"
+    compile "org.apache.spark:spark-mllib_2.11:$sparkVersion"
+    compile "org.apache.spark:spark-sql_2.11:$sparkVersion"
+    compile "org.apache.spark:spark-hive_2.11:$sparkVersion"
+
+    compile(group: 'amlthreat', name: 'common_udfs', version: '1.0.43')
+    // compile(group: 'amlthreat', name: 'residence_udfs', version: '1.0.30')
+    // compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    // TESTING dependencies
+    testCompile 'org.junit.jupiter:junit-jupiter:5.5.1'
+    testCompile 'org.assertj:assertj-core:3.13.2'
+}
+
+platoJvm {
+    publishing {
+        artifacts = 'none'
+    }
+    jacoco {
+        minimumCoverage = 0.0
+        coverageExclusions = ['**/*']
+    }
+}
+
+task sourcesJar(type: Jar) {
+    group = 'build'
+    from sourceSets.main.allSource
+    classifier 'sources'
+}
+
+defaultTasks 'clean', 'build', 'shadow'
+
+publishing {
+    publications {
+        mavenJvmArtifact(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact shadowJar
+        }
+    }
+}
+
+artifactoryPublish.dependsOn shadowJar
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    maven {
+        url "${artifactory_contextUrl}/virtual-release-bns"
+        credentials {
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+    }
+    jcenter()
+}

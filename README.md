@@ -1,0 +1,1 @@
+# https://productivitytools.bns/projdel_confluence/display/ATM/X9+Enriched+File+-+Parce+Payor+into+Components
